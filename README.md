@@ -12,8 +12,8 @@ Département du Rhône, Jean-Pierre Berthet, Cédric Lachasse, Yann Nguema
 
 Contact : info@erasme.org ou info@paperzoom.com
 
-Ce programme est un logiciel libre distribue sous licence CECILL : http://www.cecill.info.
+Ce programme est un logiciel libre distribue sous licence AGPLv3 : http://www.gnu.org/licenses/agpl.html.
 
 Vous pouvez l'utiliser, le distribuer et le modifier selon les termes de cette license.
 
-Pour plus de details voir le fichier LICENSE.txt ou l'aide en ligne : http://www.erasme.org/Paperzoom_  ou http://www.paperzoom.com ou https://github.com/erasme/paperzoom
+http://www.erasme.org/Paperzoom_
