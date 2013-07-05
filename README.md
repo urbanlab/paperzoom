@@ -12,7 +12,7 @@ Département du Rhône, Jean-Pierre Berthet, Cédric Lachasse, Yann Nguema
 
 Contact : info@erasme.org ou info@paperzoom.com
 
-Ce programme est un logiciel libre distribue sous licence AGPLv3 : http://www.gnu.org/licenses/agpl.html.
+Ce programme est un logiciel libre distribué sous licence AGPLv3 : http://www.gnu.org/licenses/agpl.html.
 Vous pouvez l'utiliser, le distribuer et le modifier librement selon les termes de cette license.
 Vous devez citer la paternité du projet lors de la distribution du logiciel et reverser sous les mêmes termes de license les évolutions apportées au code (idéalement sur cette forge en pull request).
 
