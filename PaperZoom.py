@@ -1,23 +1,3 @@
-'''
-Paperzoom
-Dispositif d'exploration numérique avec une kinect et une feuille de papier
-
-License
-Paperzoom, Systeme interactif d'exploration
-
-Copyright (c) 2008-2012
-
-Département du Rhône, Jean-Pierre Berthet, Cédric Lachasse, Yann Nguema
-
-Contact : info@erasme.org ou info@paperzoom.com
-
-Ce programme est un logiciel libre distribue sous licence CECILL : http://www.cecill.info.
-
-Vous pouvez l'utiliser, le distribuer et le modifier selon les termes de cette license.
-
-Pour plus de details voir le fichier LICENSE.txt ou l'aide en ligne : http://www.erasme.org/Paperzoom_ ou http://www.paperzoom.com ou https://github.com/erasme/paperzoom
-'''
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
@@ -37,20 +17,25 @@ import numpy as np
 from shaderProg01 import *
 import os, fnmatch, re
 
+#sizeScX, sizeScY = 960, 540
+sizeScX, sizeScY = 1920,1080
 glGenTextures(4)
 tview = 4
 slview = 0
 sllg, slrlg = 0.05, 0.04
 slh, slb = 0.7,-0.7
 slz,slrz = 0.2,0.22
-slx = [-1.1, -1.0, -0.9, -0.8, 0.4, 0.6, 0.7, 0.9, 1.0, 1.1, -0.6, -0.5, -0.4, -0.3, -0.1, 0.0, 0.1, 0.2]
-nbslid = len(slx)
+slx = [-1.1, -1.0, -0.9, -0.8,                              # x position of sliders
+       0.4, 0.6, 0.7, 0.9, 1.0,
+       1.1, -0.6, -0.5, -0.4,
+       -0.3, -0.1, 0.0, 0.1, 0.2]
+nbslid = len(slx)                                           # sliders nomber
 sld = []
 slrd = []
 slbv = []
 slrbv = []
-ratioK = 0.75
-ratioT = 0.5625
+ratioK = 0.5622
+ratioT = 0.5622
 knmin,knmax = 50,900
 scaletex = 0.75
 nbtex = 1
@@ -60,7 +45,7 @@ shdiv = [0,0,0,0,1,0,1,1]
 shfrq = [1.0, 1.0]
 near = GL_NEAREST
 line = GL_LINEAR
-filt = near
+filt = line
 reap = GL_REPEAT
 clam = GL_CLAMP
 cled = GL_CLAMP_TO_EDGE
@@ -74,40 +59,42 @@ scen = newscen = 0
 def init():
     global matvbo, gbv, gbt, fbv, fbt, knt, t, sld, slbv, sD, knmin, knmax, knminplus, matKn, maskv, nbt, gtex, scaletex, erodew, erodeh
     print "esc to quit"
+    print glutGet(GLUT_SCREEN_WIDTH), glutGet(GLUT_SCREEN_HEIGHT)
     rep = os.getcwd()
-    imtex = []
-    sD = range(18)
+    imtex = []                                              # images textures
+    sD = range(nbslid)                                      # id sliders
     glInitMultitextureARB()
     initShaders1( )
     initShaders2( )
     initShaders3( )
     initShaders4( )
-    gtex = textureFold()
-    glActiveTextureARB(GL_TEXTURE0_ARB)
-    im3d, sz, nbtex3d, filt = texture3D(gtex[scen], 20)
-    glBind3Dcol(im3d, 0, sz,  nbtex3d, filt)
-    im = Image.open("bleu.jpg").convert("RGBA")
+    gtex = texFold()                                    # groupe de textures
+    glActiveTextureARB(GL_TEXTURE0_ARB)                     # texture 3D id 0
+    im3d, sz, nbtex3d, filt = texture3D(gtex[scen], 40)     # charge scene par defaut
+    print filt
+    glBind3Dcol(im3d, 0, sz,  nbtex3d, filt)                # bind to OpenGl
+    im = Image.open("bleu.jpg").convert("RGBA")             # texture slider bleue id 1
     im = im.tostring("raw","RGBA",0,-1)
     glActiveTextureARB(GL_TEXTURE1_ARB)
     glBind2Dcol(im, 1, (50,50))
-    im = Image.open("rouge.jpg").convert("RGBA")
+    im = Image.open("rouge.jpg").convert("RGBA")            # texture slider rouge id 2
     im = im.tostring("raw","RGBA",0,-1)
     glActiveTextureARB(GL_TEXTURE2_ARB)
     glBind2Dcol(im, 2, (50,50))
-    fdata = open('dataSave.txt', 'r')
+    fdata = open('dataSave.txt', 'r')                       # charge fichier sauvegarde
     f = fdata.readlines()
     slhr = range(nbslid)
     for i in range(nbslid):
-        slhr[i]=sD[i]=f[i]
-    sizedp[0]=4*int(((float(f[0])/2.0)+0.5)*200.0)
-    sizedp[2]=4*int(((float(f[2])/2.0)+0.5)*200.0)
-    sizedp[1]=int((float(f[1])+1.0)*300.0)
-    sizedp[3]=int((float(f[3])+1.0)*300.0)
-    scaletex=float(f[4])+1.0
-    erodew=float(f[5])*0.1
+        slhr[i]=sD[i]=f[i]                                  # read sliders position saved
+    sizedp[0]=4*int(((float(f[0])/1.0)+0.5)*200.0)          # read resized kinect
+    sizedp[2]=4*int(((float(f[2])/1.0)+0.5)*200.0)
+    sizedp[1]=4*int((float(f[1])+0.5)*200.0)
+    sizedp[3]=4*int((float(f[3])+0.5)*200.0)
+    scaletex=float(f[4])+1.0                                # read resized texture
+    erodew=float(f[5])*0.1                                  # read erode shader val
     erodeh=float(f[6])*0.1
-    knmin=int((float(f[7])+1.0)*500.0)+300
-    knminplus=int((float(f[8])+1.0)*200.0)
+    knmin=int((float(f[7])+1.0)*500.0)+300                  # read depth kinect min-length 
+    knminplus=int((float(f[8])+1.0)*100.0)
     for i in range(8):
         shdiv[i]=float(f[i+10])
     knmax=knmin+knminplus
@@ -149,7 +136,7 @@ def init():
     gluOrtho2D( -1.5, 1.5, -1.5*ratioT, 1.5*ratioT)
     glMatrixMode( GL_MODELVIEW )
 
-def textureFold():
+def textureFold():                  #search scenarios in Images folder
     global nbfold
     folder = []
     gdir = []
@@ -158,6 +145,25 @@ def textureFold():
             folder.append('/Images/'+file)
     folder.sort()
     nbfold = len(folder)
+    for dir in folder:                  #group images (.jpg or .tif) of each scenario
+        group = []
+        for file in os.listdir('./'+dir):        
+            if not re.match("\.", file) and (fnmatch.fnmatch(file, '*.jpg') or fnmatch.fnmatch(file, '*.tif')):     
+                group.append(file)
+        group.sort()
+        group.insert(0, dir)
+        group.insert(0, 'i')
+        gdir.append(group)
+    return gdir                     #liste of each images in each scenario
+
+def texFold():
+    global nbfold
+    folder = []
+    gdir = []
+    for file in os.listdir('./Images/Images/'):
+        if os.path.isdir('./Images/Images/'+file):
+            folder.append('/Images/Images/'+file)
+    folder.sort()
     for dir in folder:
         group = []
         for file in os.listdir('./'+dir):        
@@ -167,27 +173,59 @@ def textureFold():
         group.insert(0, dir)
         group.insert(0, 'i')
         gdir.append(group)
+
+    folder = []
+    for file in os.listdir('./Images/Videos/'):
+        if os.path.isdir('./Images/Videos/'+file):
+            folder.append('/Images/Videos/'+file)
+    folder.sort()
+    for dir in folder:
+        group = []
+        for file in os.listdir('./'+dir):        
+            if not re.match("\.", file) and (fnmatch.fnmatch(file, '*.jpg') or fnmatch.fnmatch(file, '*.tif')):     
+                group.append(file)
+        group.sort()
+        group.insert(0, dir)
+        group.insert(0, 'v')
+        gdir.append(group)
+        #print gdir, len(gdir)
+        nbfold = len(gdir)
     return gdir
 
-def texture3D(tf, nb):
-    global szt
-    if tf[0] == "i" : tfilter = near
-    if tf[0] == "v" : tfilter = line
+def texture3D(tf, nb):                  #build flatten liste of each images of actual scenario
+    global szt,tview
+    if tf[0] == "i" : tview = 4
+    if tf[0] == "v" : tview = 1
     if  len(tf)-1<nb:
         nb = len(tf)-2
     else:
         nb = nb-2
-    file = rep+tf[1]+"/"+tf[2]
-    imi = Image.open(file).convert("RGBA")
-    size = imi.size
-    img = imi.tostring("raw","RGBA",0,1)
-    for j in range(nb-1):
-        file = rep+tf[1]+"/"+tf[j+3]
+    if tf[0] == "i" :
+        file = rep+tf[1]+"/"+tf[2]
         imi = Image.open(file).convert("RGBA")
-        imi = imi.tostring("raw","RGBA",0,1)
-        img += imi
+        size = imi.size
+        img = imi.tostring("raw","RGBA",0,1)
+        for j in range(nb-1):
+            file = rep+tf[1]+"/"+tf[j+3]
+            #print file
+            imi = Image.open(file).convert("RGBA")
+            imi = imi.tostring("raw","RGBA",0,1)
+            img += imi
+    if tf[0] == "v" :
+        #nb = (knmax-knmin)-2
+        a = 1 #len(tf)/float(nb)
+        file = rep+tf[1]+"/"+tf[2]
+        imi = Image.open(file).convert("RGBA")
+        size = imi.size
+        img = imi.tostring("raw","RGBA",0,1)
+        for j in range(nb-1):
+            file = rep+tf[1]+"/"+tf[int(j*a)+3]
+            #print file
+            imi = Image.open(file).convert("RGBA")
+            imi = imi.tostring("raw","RGBA",0,1)
+            img += imi
     szt = size[0]/float(size[1])
-    return img , size, nb, tfilter
+    return img , size, nb, near
 
 def initShaders1( ):
     global sPmask
@@ -229,8 +267,8 @@ def display(*args):
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    if tview == 4:
-	glClearColor(0.0,0.0, 0.0, 1.0)
+    if tview == 4 or tview == 1:
+    glClearColor(0.0,0.0, 0.0, 1.0)
         glEnable(GL_TEXTURE_3D)
         sP3d.enable()
         glUniform1iARB(sP3d.indexOfUniformVariable("tex0"), 0)
@@ -238,28 +276,28 @@ def display(*args):
         glBegin(GL_QUADS)
 
         glMultiTexCoord2fARB( GL_TEXTURE3_ARB, 0.0, 1.0 )
-        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 0.0, 1.0, 0.0 )
+        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 1.0, 0.0, 0.0 )
         glVertex3f(maskv[0][0], maskv[0][1], 0.0)
         
 
         glMultiTexCoord2fARB( GL_TEXTURE3_ARB, 0.0, 0.0 )
-        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 0.0, 0.0, 0.0 )
+        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 1.0, 1.0, 0.0 )
         glVertex3f(maskv[1][0], maskv[1][1], 0.0)
         
 
         glMultiTexCoord2fARB( GL_TEXTURE3_ARB, 1.0, 0.0 )
-        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 1.0, 0.0, 0.0)
+        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 0.0, 1.0, 0.0)
         glVertex3f(maskv[2][0], maskv[2][1], 0.0)
         
 
         glMultiTexCoord2fARB( GL_TEXTURE3_ARB, 1.0, 1.0 )
-        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 1.0, 1.0, 0.0)
+        glMultiTexCoord3fARB( GL_TEXTURE0_ARB, 0.0, 0.0, 0.0)
         glVertex3f(maskv[3][0], maskv[3][1], 0.0)
  
         glEnd()
 
     if tview == 0:
-	glClearColor(0.0,0.0, 0.0, 1.0)
+    glClearColor(0.0,0.0, 0.0, 1.0)
         sPpass.enable()
         #glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[1])
         glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[nbtex1])
@@ -305,8 +343,8 @@ def display(*args):
         glEnd()
         sPmask.disable()
         
-    if tview == 1 or tview == 3:
-	glClearColor(1.5,0.0, 0.0, 1.0)
+    if tview == 5 or tview == 3:
+    glClearColor(1.5,0.0, 0.0, 1.0)
         sPpass.enable()
         #glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[1])
         glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), 3)
@@ -376,6 +414,7 @@ def glBind2Dcol(im,idt, size):
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR )
 
 def glBind3Dcol(im,idt, size, nb, filt):
+    #print near
     glEnable(GL_TEXTURE_3D)
     glBindTexture(GL_TEXTURE_3D, idt)
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size[0], size[1], nb, 0, GL_RGBA, GL_UNSIGNED_BYTE, im)
@@ -385,9 +424,9 @@ def glBind3Dcol(im,idt, size, nb, filt):
     glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filt )
     glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filt )    
 
-bl = 0.0
+mdp = 0
 def DepthGet():
-    global text, bl
+    global text, bl, mdp
     knlen = knmax-knmin
     depth1, timestamp = freenect.sync_get_depth()
     depth1 = depth1[sizedp[1]:sizedp[3],sizedp[0]:sizedp[2]]
@@ -395,22 +434,58 @@ def DepthGet():
     dpysz = sizedp[3]-sizedp[1]
     np.resize(depth1,(dpysz,dpxsz))
     dpmin = depth1.min()
+    dmax = depth1<=knmax
+    dpmax = (depth1*dmax).max()
+    #print dpmax
     dmin = depth1>=knmin
-    if tview==3 : depth = 255*(np.logical_and(dmin, depth1<=knmax))    
-    np.clip(depth1, knmin, knmax, out=depth1)
-    dmask = depth1-knmin
-    if tview == 4:depth = 255*(1.0-((dmin*dmask)/float(knlen)))
+    #print dpmin, knmax, knmin, knmax-dpmin
+    if tview==3 :
+        depth = 255*(np.logical_and(dmin, depth1<=knmax))
+        '''mindp = knmax-dpmin
+        if mindp<=0 : mindp = 1
+        if mindp>knlen : mindp=knlen
+        mdp1 = (mindp - mdp)/2
+        mdp = mdp+mdp1
+        print mindp, mdp
+        leveldp = mdp/float(knlen)
+        depth = 255*((depth1<=knmax)*leveldp)
+        print depth1<=knmax'''
+    #if tview==3 : depth = 255*(np.logical_and(dmin, depth1<=knmax))
+    
+    
+    if tview == 4:
+        np.clip(depth1, knmin, knmax, out=depth1)
+        dmask = depth1-knmin
+        depth = 255*(1.0-((dmin*dmask)/float(knlen)))
+        depth = np.flipud(depth)
+        depth = np.fliplr(depth)
     #if tview == 3:depth = 255*(1.0-((dmin*dmask)/float(knlen)))
-    if tview==1 or tview == 0:depth = 255*dmax
+    if tview==1 or tview == 0:      #depth = 255*dmax
+        maxdp = knmax-dpmax
+        if maxdp<=0 : maxdp = 1
+        if maxdp>knlen : maxdp=knlen
+        mdp1 = (maxdp - mdp)/5
+        mdp = mdp+mdp1
+        
+        leveldp = mdp/float(knlen)
+        
+        #depth = np.logical_and(dmin, depth1<=knmax)
+        depth = 255*((depth1<=knmax)*leveldp)
+        #print depth1<=knmax
+        #print maxdp, mdp, leveldp
+        mdp = maxdp
+        depth = np.flipud(depth)
+        depth = np.fliplr(depth)
     depth = depth.flatten()
     return depth, (dpxsz,dpysz)
 
 levB = 0
 def animationStep( *args ):
-    global t, nbtex, scen, newscen, nbt, gtex
+    global t, nbtex, scen, newscen, nbt, gtex, tview
+    #print knmax-knmin
     if scen!=newscen:
         glActiveTextureARB(GL_TEXTURE0_ARB)
-        im3d, sz, nbtex3d, filt = texture3D(gtex[scen-1], 20)
+        im3d, sz, nbtex3d, filt = texture3D(gtex[scen-1], 50)
         glBind3Dcol(im3d, 0, sz,  nbtex3d, filt)
         newscen = scen
     kn, newsize = DepthGet()
@@ -421,43 +496,45 @@ def animationStep( *args ):
 def souris(but, sta, x , y):
     global onsl
     onsl = -1
-    gly = -1.0*(y*(3*ratioT/1080.0)-(1.5*ratioT))
-    glx = x*(3/1920.0)-1.5
+    gly = -1.0*((3.0*y*ratioT/float(sizeScY))-(1.5*ratioT))
+    glx = x*(3/float(sizeScX))-1.5
     if gly>=slb and gly<=slh:
         for i in range(nbslid):
             if glx>=sld[i][0][0] and glx<=sld[i][3][0]:
                 onsl = i
-
+                #print i
 def sel(x, y):
     global slgly, knmin, knmax, knminplus, erodew, erodeh, shrad, shfrq, text, maskv, scaletex
-    gly = -1.0*(y*(3*ratioT/1080.0)-(1.5*ratioT))
-    glx = x*(3/1920.0)-1.5
+    gly = -1.0*((3.0*y*ratioT/float(sizeScY))-(1.5*ratioT))
+    glx = x*(3/float(sizeScX))-1.5
     if onsl!=-1:
         slrd[onsl][0][1] = gly
         slrd[onsl][3][1] = gly
         if onsl==0:
-            szgly = 4*int(((gly/2.0)+0.5)*200.0)
+            szgly = 4*int(((gly/1.0)+0.5)*200.0)
+            #print szgly,gly, y
             if szgly<sizedp[2] and szgly>=0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 sizedp[0]=szgly
                 saveData(0, gly)
         if onsl==2:
-            szgly = 4*int(((gly/2.0)+0.5)*200.0)
+            szgly = 4*int(((gly/1.0)+0.5)*200.0)
             if szgly>sizedp[0] and szgly<=640:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 sizedp[2]=szgly
                 saveData(2, gly)
         if onsl==1:
-            szgly = int((gly+1.0)*300.0)
+            szgly = 4*int((gly+0.5)*200.0)
+            #print szgly,gly, y
             if szgly<sizedp[3] and szgly>=0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 sizedp[1]=szgly
                 saveData(1, gly)
         if onsl==3:
-            szgly = int((gly+1.0)*300.0)
+            szgly = 4*int((gly+0.5)*200.0)
             if szgly>sizedp[1] and szgly<=480:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
@@ -500,16 +577,17 @@ def sel(x, y):
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 knmin = szgly
                 knmax = knmin+knminplus
-		print knmin, knminplus, knmax
+        print knmin, knminplus, knmax
                 saveData(7, gly)
         if onsl==8:
-            szgly = int((gly+1.0)*200.0)
+            szgly = int((gly+1.0)*100.0)
+            print gly, szgly
             if  knmin+szgly<2048 and szgly>0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 knminplus = szgly
                 knmax = knmin+knminplus
-		print knmin, knminplus, knmax
+        print knmin, knminplus, knmax
                 saveData(8, gly)
         if onsl==10:           
             shdiv[0] = text = (gly+0.0)*0.2
@@ -557,35 +635,46 @@ def saveData(i, nsave):
 
 def keyPressed(*args):
     global scen, tview, slview
+    print "keyPressed"
     try:
         iscen = int(args[0])
     except:
         iscen = 0
+    print args[0]
     if args[0] == '\x1b':
         sData = open('dataSave.txt', 'w')
         for i in range(len(sD)):
             sData.write(str(sD[i]))
+            print str(sD[i])
         sData.close()
         glDeleteTextures(4)
         sys.exit()
     if args[0] == 'w':
-        if slview==1:slview=0
-        else:slview=1
+        if slview==1:
+            slview=0
+            glutSetCursor(GLUT_CURSOR_NONE)
+        else:
+            slview=1
+            glutSetCursor(GLUT_CURSOR_INHERIT)
     if args[0] == 'a':
         tview = 3
         glutSetCursor(GLUT_CURSOR_INHERIT)
     if args[0] == 'p':
         tview = 4
-        glutSetCursor(GLUT_CURSOR_NONE) 
+        glutSetCursor(GLUT_CURSOR_NONE)
+    if args[0] == 'm':
+        tview = 1
+        glutSetCursor(GLUT_CURSOR_INHERIT)
     if iscen != 0 and iscen <= nbfold: scen = iscen
 
 def ReSizeGLScene(Width, Height):
-    if Height == 0:						
+    if Height == 0:                     
         Height = 1
     f = Height/float(Width)
+    print Height, Width
     glViewport(0, 0, Width, Height)
     glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()	
+    glLoadIdentity()    
     gluOrtho2D( -1.5, 1.5, -1.5*f, 1.5*f)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
@@ -593,7 +682,7 @@ def ReSizeGLScene(Width, Height):
 def main():    
     glutInit(  )    
     glutInitDisplayMode( GLUT_DOUBLE)
-    glutInitWindowSize( 800,600 )
+    glutInitWindowSize( sizeScX, sizeScY )
     glutInitWindowPosition( 10, 10 )
     glutCreateWindow("Yo")    
     glutDisplayFunc( display )
