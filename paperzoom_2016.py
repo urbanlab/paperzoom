@@ -50,8 +50,8 @@ reap = GL_REPEAT
 clam = GL_CLAMP
 cled = GL_CLAMP_TO_EDGE
 wrap = cled
-invH = 1.0
-invL = -1.0
+invH = -1.0
+invL = 1.0
 sizedp = [0,0,800,600]
 rep = os.getcwd()
 scen = newscen = 0
@@ -86,10 +86,12 @@ def init():
     slhr = range(nbslid)
     for i in range(nbslid):
         slhr[i]=sD[i]=f[i]                                  # read sliders position saved
+
     sizedp[0]=4*int(((float(f[0])/1.0)+0.5)*200.0)          # read resized kinect
-    sizedp[2]=4*int(((float(f[2])/1.0)+0.5)*200.0)
     sizedp[1]=4*int((float(f[1])+0.5)*200.0)
+    sizedp[2]=4*int(((float(f[2])/1.0)+0.5)*200.0)
     sizedp[3]=4*int((float(f[3])+0.5)*200.0)
+
     scaletex=float(f[4])+1.0                                # read resized texture
     erodew=float(f[5])*0.1                                  # read erode shader val
     erodeh=float(f[6])*0.1
@@ -141,12 +143,43 @@ def init():
 # PGL : 30/08/17 : Only one function is better than re-affecting value 
 # each time we need maskv
 #
-def setMaskv(ratio):
+# I guess that this function defines the paper coordinate, the 0,0 point 
+# is in the middle of the screen
+#              1-----------4
+#              |           |
+#              |     o     |
+#              |           |
+#              2-----------3
+#
+#
+def setMaskv(imgRatio):
+    x = scaletex * invL
+    y = scaletex * imgRatio * invH
+    '''
+    x1 = -x + erodew
+    y1 = y + erodeh
+    x2 = -x
+    y2 = -y
+    x3 = x
+    y3 = -y
+    x4 = x
+    y4 = y
+    '''
+    x1 = -x + erodew
+    y1 = y + erodeh
+    x2 = -x
+    y2 = -y
+    x3 = x
+    y3 = -y
+    x4 = x
+    y4 = y
+
     z = 0.1
-    return np.array([[-1*scaletex*invL+erodew,scaletex*ratio*invH+erodeh, z],
-                     [-1*scaletex*invL,-1*scaletex*ratio*invH, z],
-                     [scaletex*invL,-1*scaletex*ratio*invH, z],
-                     [scaletex*invL,scaletex*ratio*invH, z]],'f')
+
+    return np.array([[x1, y1, z],
+                     [x2, y2, z],
+                     [x3, y3, z],
+                     [x4, y4, z]],'f')
 
 def textureFold():					#search scenarios in Images folder
     global nbfold
