@@ -1,0 +1,62 @@
+//uniform sampler2D tex0;
+
+uniform sampler3D tex0;
+uniform sampler2D tex1;
+
+//varying vec2 texcoord10;
+//varying vec2 texcoord12;
+
+varying vec2 texcoord00;
+varying vec2 texcoord01;
+varying vec2 texcoord02;
+varying vec2 texcoord10;
+varying vec2 texcoord12;
+varying vec2 texcoord20;
+varying vec2 texcoord21;
+varying vec2 texcoord22;
+
+varying vec2 texcoord40;
+varying vec2 texcoord41;
+varying vec2 texcoord42;
+varying vec2 texcoord43;
+varying vec2 texcoord44;
+varying vec2 texcoord45;
+varying vec2 texcoord46;
+varying vec2 texcoord47;
+
+
+void main()
+{
+
+	vec4 dilate = texture2D(tex1, 0.5 * (texcoord10 + texcoord12));
+
+	vec4 s00 = texture2D(tex1, texcoord00);
+	vec4 s01 = texture2D(tex1, texcoord01);
+	vec4 s02 = texture2D(tex1, texcoord02);
+	vec4 s10 = texture2D(tex1, texcoord10);
+	vec4 s12 = texture2D(tex1, texcoord12);
+	vec4 s20 = texture2D(tex1, texcoord20);
+	vec4 s21 = texture2D(tex1, texcoord21);
+	vec4 s22 = texture2D(tex1, texcoord22);
+
+	vec4 pass1 = 0.1*(s00 + s22) + 0.1*(s01 + s21) + 0.1*(s02 + s20) + 0.1*(s10 + s12);
+
+	vec4 s40 = texture2D(tex1, texcoord40);
+	vec4 s41 = texture2D(tex1, texcoord41);
+	vec4 s42 = texture2D(tex1, texcoord42);
+	vec4 s43 = texture2D(tex1, texcoord43);
+	vec4 s44 = texture2D(tex1, texcoord44);
+	vec4 s45 = texture2D(tex1, texcoord45);
+	vec4 s46 = texture2D(tex1, texcoord46);
+	vec4 s47 = texture2D(tex1, texcoord47);
+
+	vec4 pass2 = 0.05*(s40 + s47) + 0.05*(s41 + s46) + 0.05*(s42 + s45) + 0.05*(s43 + s44);
+        vec4 gauss = dilate + pass1 + pass2;
+	float a = gauss.r;
+	vec3 t0 = texcoord30.xyz;
+	t0.z += (a*0.6)+0.22;
+	vec4 color = texture3D(tex0, vec3(t0.x,t0.y,t0.z)).rgba;
+	gl_FragColor = color; 
+}
+
+
