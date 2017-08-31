@@ -50,8 +50,8 @@ reap = GL_REPEAT
 clam = GL_CLAMP
 cled = GL_CLAMP_TO_EDGE
 wrap = cled
-invH = -1.0
-invL = 1.0
+invH = 1.0
+invL = -1.0
 sizedp = [0,0,800,600]
 rep = os.getcwd()
 scen = newscen = 0
@@ -473,8 +473,21 @@ mdp = 0
 def DepthGet():
     global text, bl, mdp
     knlen = knmax-knmin
+    # Get the Kinect Signal : 
+    # freenect.sync_get_depth()[0] is the image send by Kinect
+    # freenect.sync_get_depth()[1] is the timestamp
     depth1, timestamp = freenect.sync_get_depth()
+    #
+    # Flip Array to get the image reversed
+    #
+    #depth1 = np.fliplr(depth1) # Flip left/right
+    #depth1 = np.flipud(depth1) # Flip up/down
+
+    depth1 = depth1[::-1, ::-1]
+
     depth1 = depth1[sizedp[1]:sizedp[3],sizedp[0]:sizedp[2]]
+    #depth1 = depth1[sizedp[1]:sizedp[3]:-1,sizedp[0]:sizedp[2]:-1]
+
     dpxsz = sizedp[2]-sizedp[0]
     dpysz = sizedp[3]-sizedp[1]
     np.resize(depth1,(dpysz,dpxsz))
