@@ -71,7 +71,6 @@ def init():
     gtex = texFold()                                    # groupe de textures
     glActiveTextureARB(GL_TEXTURE0_ARB)                     # texture 3D id 0
     im3d, sz, nbtex3d, filt = texture3D(gtex[scen], 40)     # charge scene par defaut
-    #print filt
     glBind3Dcol(im3d, 0, sz,  nbtex3d, filt)                # bind to OpenGl
     im = Image.open("bleu.jpg").convert("RGBA")             # texture slider bleue id 1
     im = im.tobytes("raw","RGBA",0,-1)
@@ -102,10 +101,6 @@ def init():
     knmax=knmin+knminplus
     propimage = 0.5625
     maskv = setMaskv(propimage)
-    #np.array([[-1*scaletex*invL+erodew,scaletex*propimage*invH+erodeh,0.1],
-    #                                 [-1*scaletex*invL,-1*scaletex*propimage*invH,0.1],
-    #                                 [scaletex*invL,-1*scaletex*propimage*invH,0.1],
-    #                                 [scaletex*invL,scaletex*propimage*invH,0.1]],'f')
     matt = np.array([[0,1],[0,0],[1,0],[1,1]],'f')
     matKn = np.array([[0,1],[0,0],[1,0],[1,1]],'f')
     for i in range(nbslid):
@@ -252,20 +247,17 @@ def texture3D(tf, nb):					#build flatten liste of each images of actual scenari
         img = imi.tobytes("raw","RGBA",0,1)
         for j in range(nb-1):
             file = rep+tf[1]+"/"+tf[j+3]
-            #print file
             imi = Image.open(file).convert("RGBA")
             imi = imi.tobytes("raw","RGBA",0,1)
             img += imi
     if tf[0] == "v" :
-        #nb = (knmax-knmin)-2
-        a = 1 #len(tf)/float(nb)
+        a = 1
         file = rep+tf[1]+"/"+tf[2]
         imi = Image.open(file).convert("RGBA")
         size = imi.size
         img = imi.tobytes("raw","RGBA",0,1)
         for j in range(nb-1):
             file = rep+tf[1]+"/"+tf[int(j*a)+3]
-            #print file
             imi = Image.open(file).convert("RGBA")
             imi = imi.tobytes("raw","RGBA",0,1)
             img += imi
@@ -344,13 +336,7 @@ def display(*args):
     if tview == 0:
 	glClearColor(0.0,0.0, 0.0, 1.0)
         sPpass.enable()
-        #glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[1])
         glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[nbtex1])
-        #glUniform4fARB(sPpass.indexOfUniformVariable("radius"), shrad[0],shrad[1])
-        #glUniformMatrix2fvARB(sPpass.indexOfUniformVariable("origin"),2,0, shrad)
-        #glUniformMatrix2fvARB(sPpass.indexOfUniformVariable("offset"),2,0, shfrq)
-        #glUniform1fARB(sPpass.indexOfUniformVariable("width"), erodew)
-        #glUniform1fARB(sPpass.indexOfUniformVariable("height"), erodeh)
         glBegin(GL_QUADS)
         glTexCoord2f(0.0, 0.0)
         glVertex3f(maskv[0][0], maskv[0][1], 0.0)
@@ -391,13 +377,7 @@ def display(*args):
     if tview == 5 or tview == 3:
 	glClearColor(1.5,0.0, 0.0, 1.0)
         sPpass.enable()
-        #glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), t[1])
         glUniform1iARB(sPpass.indexOfUniformVariable("tex0"), 3)
-        #glUniform4fARB(sPpass.indexOfUniformVariable("radius"), shrad[0],shrad[1])
-        #glUniformMatrix2fvARB(sPpass.indexOfUniformVariable("origin"),2,0, shrad)
-        #glUniformMatrix2fvARB(sPpass.indexOfUniformVariable("offset"),2,0, shfrq)
-        #glUniform1fARB(sPpass.indexOfUniformVariable("width"), erodew)
-        #glUniform1fARB(sPpass.indexOfUniformVariable("height"), erodeh)
         glBegin(GL_QUADS)
         glTexCoord2f(shdiv[0], 1.0-shdiv[1])
         glVertex3f(maskv[0][0], maskv[0][1], 0.0)
@@ -459,7 +439,6 @@ def glBind2Dcol(im,idt, size):
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR )
 
 def glBind3Dcol(im,idt, size, nb, filt):
-    #print near
     glEnable(GL_TEXTURE_3D)
     glBindTexture(GL_TEXTURE_3D, idt)
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size[0], size[1], nb, 0, GL_RGBA, GL_UNSIGNED_BYTE, im)
@@ -480,13 +459,8 @@ def DepthGet():
     #
     # Flip Array to get the image reversed
     #
-    #depth1 = np.fliplr(depth1) # Flip left/right
-    #depth1 = np.flipud(depth1) # Flip up/down
-
     depth1 = depth1[::-1, ::-1]
-
     depth1 = depth1[sizedp[1]:sizedp[3],sizedp[0]:sizedp[2]]
-    #depth1 = depth1[sizedp[1]:sizedp[3]:-1,sizedp[0]:sizedp[2]:-1]
 
     dpxsz = sizedp[2]-sizedp[0]
     dpysz = sizedp[3]-sizedp[1]
@@ -494,22 +468,11 @@ def DepthGet():
     dpmin = depth1.min()
     dmax = depth1<=knmax
     dpmax = (depth1*dmax).max()
-    #print dpmax
     dmin = depth1>=knmin
     #print dpmin, knmax, knmin, knmax-dpmin
+
     if tview==3 :
         depth = 255*(np.logical_and(dmin, depth1<=knmax))
-        '''mindp = knmax-dpmin
-        if mindp<=0 : mindp = 1
-        if mindp>knlen : mindp=knlen
-        mdp1 = (mindp - mdp)/2
-        mdp = mdp+mdp1
-        print mindp, mdp
-        leveldp = mdp/float(knlen)
-        depth = 255*((depth1<=knmax)*leveldp)
-        print depth1<=knmax'''
-    #if tview==3 : depth = 255*(np.logical_and(dmin, depth1<=knmax))
-    
     
     if tview == 4:
         np.clip(depth1, knmin, knmax, out=depth1)
@@ -517,7 +480,7 @@ def DepthGet():
         depth = 255*(1.0-((dmin*dmask)/float(knlen)))
         depth = np.flipud(depth)
         depth = np.fliplr(depth)
-    #if tview == 3:depth = 255*(1.0-((dmin*dmask)/float(knlen)))
+
     if tview==1 or tview == 0:      #depth = 255*dmax
         maxdp = knmax-dpmax
         if maxdp<=0 : maxdp = 1
@@ -527,20 +490,17 @@ def DepthGet():
         
         leveldp = mdp/float(knlen)
         
-        #depth = np.logical_and(dmin, depth1<=knmax)
         depth = 255*((depth1<=knmax)*leveldp)
-        #print depth1<=knmax
-        #print maxdp, mdp, leveldp
         mdp = maxdp
         depth = np.flipud(depth)
         depth = np.fliplr(depth)
+
     depth = depth.flatten()
     return depth, (dpxsz,dpysz)
 
 levB = 0
 def animationStep( *args ):
     global t, nbtex, scen, newscen, nbt, gtex, tview
-    #print knmax-knmin
     if scen!=newscen:
         glActiveTextureARB(GL_TEXTURE0_ARB)
         im3d, sz, nbtex3d, filt = texture3D(gtex[scen-1], 50)
@@ -560,7 +520,6 @@ def souris(but, sta, x , y):
         for i in range(nbslid):
             if glx>=sld[i][0][0] and glx<=sld[i][3][0]:
                 onsl = i
-                #print i
 def sel(x, y):
     global slgly, knmin, knmax, knminplus, erodew, erodeh, shrad, shfrq, text, maskv, scaletex
     gly = -1.0*((3.0*y*ratioT/float(sizeScY))-(1.5*ratioT))
@@ -570,7 +529,6 @@ def sel(x, y):
         slrd[onsl][3][1] = gly
         if onsl==0:
             szgly = 4*int(((gly/1.0)+0.5)*200.0)
-            #print szgly,gly, y
             if szgly<sizedp[2] and szgly>=0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
@@ -585,7 +543,6 @@ def sel(x, y):
                 saveData(2, gly)
         if onsl==1:
             szgly = 4*int((gly+0.5)*200.0)
-            #print szgly,gly, y
             if szgly<sizedp[3] and szgly>=0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
@@ -605,10 +562,6 @@ def sel(x, y):
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 scaletex = gly+1.0
                 maskv = setMaskv(ratioT)
-		#np.array([[-1*scaletex*invL+erodew,scaletex*ratioT*invH+erodeh,0.1],
-                #                     [-1*scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                     [scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                     [scaletex*invL,scaletex*ratioT*invH,0.1]],'f')
                 saveData(4, gly)
                 text = str("maskv"+str(gly))
         if onsl==5:
@@ -616,20 +569,12 @@ def sel(x, y):
             glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
             erodew = gly*0.1
             maskv = setMaskv(ratioT)
-		#np.array([[-1*scaletex*invL+erodew,scaletex*ratioT*invH+erodeh,0.1],
-                #                 [-1*scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                 [scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                 [scaletex*invL,scaletex*ratioT*invH,0.1]],'f')
             saveData(5, gly)
         if onsl==6:
             glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
             glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
             erodeh = gly*0.1
             maskv = setMaskv(ratioT)
-		#np.array([[-1*scaletex*invL+erodew,scaletex*ratioT*invH+erodeh,0.1],
-                #                 [-1*scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                 [scaletex*invL,-1*scaletex*ratioT*invH,0.1],
-                #                 [scaletex*invL,scaletex*ratioT*invH,0.1]],'f')
             saveData(6, gly)
         if onsl==7:
             szgly = int((gly+1.0)*500.0)+300
@@ -642,13 +587,11 @@ def sel(x, y):
                 saveData(7, gly)
         if onsl==8:
             szgly = int((gly+1.0)*100.0)
-            #print gly, szgly
             if  knmin+szgly<2048 and szgly>0:
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, slrbv[onsl])
                 glBufferDataARB( GL_ARRAY_BUFFER_ARB, slrd[onsl], GL_STATIC_DRAW_ARB )
                 knminplus = szgly
                 knmax = knmin+knminplus
-		#print knmin, knminplus, knmax
                 saveData(8, gly)
         if onsl==10:           
             shdiv[0] = text = (gly+0.0)*0.2
@@ -701,7 +644,6 @@ def keyPressed(*args):
         iscen = int(args[0])
     except:
         iscen = 0
-    #print args[0]
     if args[0] == '\x1b':
         sData = open('dataSave.txt', 'w')
         for i in range(len(sD)):
@@ -732,7 +674,6 @@ def ReSizeGLScene(Width, Height):
     if Height == 0:						
         Height = 1
     f = Height/float(Width)
-    #print Height, Width
     glViewport(0, 0, Width, Height)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()	
