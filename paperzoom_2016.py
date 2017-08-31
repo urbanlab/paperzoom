@@ -450,7 +450,7 @@ def glBind3Dcol(im,idt, size, nb, filt):
 
 mdp = 0
 def DepthGet():
-    global text, bl, mdp
+    global mdp
     knlen = knmax-knmin
     # Get the Kinect Signal : 
     # freenect.sync_get_depth()[0] is the image send by Kinect
