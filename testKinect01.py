@@ -12,7 +12,7 @@ def init():
     glShadeModel(GL_SMOOTH)
     glMatrixMode( GL_PROJECTION )
     glLoadIdentity()
-    gluOrtho2D( -1.5, 1.5, -1.5*ratio, 1.5*ratio)
+    gluOrtho2D( -1.5, 1.5, 1.5*ratio, -1.5*ratio)
     glMatrixMode( GL_MODELVIEW )
 
 y = 1.0
@@ -81,7 +81,7 @@ def ReSizeGLScene(Width, Height):
     glViewport(0, 0, Width, Height)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()	
-    gluOrtho2D( -1.5, 1.5, -1.5*f, 1.5*f)
+    gluOrtho2D( -1.5, 1.5, 1.5*f, -1.5*f)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     
@@ -90,7 +90,7 @@ def main():
     glutInitDisplayMode( GLUT_DOUBLE)
     glutInitWindowSize( 640, 480 )
     glutInitWindowPosition( 400, 10 )
-    glutCreateWindow("Yo")    
+    glutCreateWindow("Test Kinect")    
     glutDisplayFunc( display )
     glutReshapeFunc(ReSizeGLScene)
     glutIdleFunc( animationStep )

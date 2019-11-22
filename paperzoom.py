@@ -686,7 +686,7 @@ def main():
     glutInitDisplayMode( GLUT_DOUBLE)
     glutInitWindowSize( sizeScX, sizeScY )
     glutInitWindowPosition( 10, 10 )
-    glutCreateWindow("Yo")    
+    glutCreateWindow("Paper Zoom")    
     glutDisplayFunc( display )
     glutReshapeFunc(ReSizeGLScene)
     glutSetCursor(GLUT_CURSOR_NONE)

@@ -14,7 +14,7 @@ sleep 1
 
 # 3. Launch the real app
 echo "Démarrage Paper zoom."
-python paperzoom_2016.py -a &
+python paperzoom.py -a &
 # 3.b Do a keyboard shortcut to switch on scenario
 echo "Changement de scenario dans 5 sec."
 sleep 5
